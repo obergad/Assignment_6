@@ -151,24 +151,23 @@ fn main() {
     // 5. Prints information about the intermediate sums
     // 5. Calls reduce_data to process the intermediate sums
     // 6. Prints the final sum computed by reduce_data
-        // PARTITION STEP: partition the data into 2 partitions
-        let xs = partition_data(num_partitions, &v);
+    // PARTITION STEP: partition the data into 2 partitions
+    let xs = partition_data(num_partitions, &v);
+    println!("xs = {:?}", xs);
 
-        // Print info about the partitions
-        print_partition_info(&xs);
+    // Print info about the partitions
+    print_partition_info(&xs);
+    let mut intermediate_sums : Vec<usize> = Vec::new();
 
-        let mut t = Vec::new();
-        let mut r = Vec::new();
-
+    let mut t: Vec<std::thread::JoinHandle<usize>> = Vec::new();
     for i in 0..num_partitions {
         let xs_clone = xs[i].clone();//clone
         t.push(thread::spawn(move || (map_data(&xs_clone))));// create threads
     }
     for i in  0..num_partitions {
-        r.push(t[i].join().unwrap());// Join threads
-        intermediate_sums.push(r[i]);
+        let r = t.remove(0).join().unwrap();// Join threads
+        intermediate_sums.push(r);
     }
-    let mut intermediate_sums : Vec<usize> = Vec::new();
     // Print the vector with the intermediate sums
     println!("Intermediate sums = {:?}", intermediate_sums);
 
@@ -197,17 +196,16 @@ fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
     let mut xs: Vec<Vec<usize>> = Vec::new();
     let mut indx = 0;
     // Create the first vector of integers
-    let mut r = v.len() % num_partitions;
+    let mut remainder = v.len() % num_partitions;
     let partition_size = v.len() / num_partitions;
         for _j in 0..num_partitions {
             let mut x1 : Vec<usize> = Vec::new();
-            if r > 0
-            { //if the modulo is > 0 then add one to part size for loop
-                    for i in 0..partition_size + 1 {
-                        x1.push(v[indx]);
-                        indx += 1;
-                    }
-                r -= 1;
+            if remainder > 0 { //if the modulo is > 0 then add one to part size for loop
+                for i in 0..partition_size + 1 {
+                    x1.push(v[indx]);
+                    indx += 1;
+                }
+                remainder -= 1;
             }
             else { //otherwise partition normally/
                 for i in 0..partition_size{
