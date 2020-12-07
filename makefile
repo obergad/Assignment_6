@@ -1,4 +1,3 @@
-# CC=clang -g -fsanitize=address
 CC= rustc
 all: compile
 

@@ -1,4 +1,5 @@
 use std::env; // to get arugments passed to the program
+use std::thread; //to create multiple threads
 
 /*
 * Print the number of partitions and the size of each partition
@@ -121,10 +122,17 @@ fn main() {
 
     // CHANGE CODE START: Don't change any code above this line
 
-    // Change the following code to create 2 threads that run concurrently and each of which uses map_data() function to process one of the two partitions
+    // Change the following code to create 2 threads that run concurrently and each of which uses
+    //map_data() function to process one of the two partitions
+    let xs_clone1 = xs[0].clone();//clone
+    let xs_clone2 = xs[1].clone();//clone
 
-    intermediate_sums.push(map_data(&xs[0]));
-    intermediate_sums.push(map_data(&xs[1]));
+    let t1 = thread::spawn(move || (map_data(&xs_clone1)));// create threads
+    let t2 = thread::spawn(move || (map_data(&xs_clone2))); // create threads
+
+    intermediate_sums.push(t1.join().unwrap());// Join threads
+    intermediate_sums.push(t2.join().unwrap());// Join threads
+
 
     // CHANGE CODE END: Don't change any code below this line until the next CHANGE CODE comment
 
@@ -143,6 +151,30 @@ fn main() {
     // 5. Prints information about the intermediate sums
     // 5. Calls reduce_data to process the intermediate sums
     // 6. Prints the final sum computed by reduce_data
+        // PARTITION STEP: partition the data into 2 partitions
+        let xs = partition_data(num_partitions, &v);
+
+        // Print info about the partitions
+        print_partition_info(&xs);
+
+        let mut t = Vec::new();
+        let mut r = Vec::new();
+
+    for i in 0..num_partitions {
+        let xs_clone = xs[i].clone();//clone
+        t.push(thread::spawn(move || (map_data(&xs_clone))));// create threads
+    }
+    for i in  0..num_partitions {
+        r.push(t[i].join().unwrap());// Join threads
+        intermediate_sums.push(r[i]);
+    }
+    let mut intermediate_sums : Vec<usize> = Vec::new();
+    // Print the vector with the intermediate sums
+    println!("Intermediate sums = {:?}", intermediate_sums);
+
+    // REDUCE STEP: Process the intermediate result to produce the final result
+    let sum = reduce_data(&intermediate_sums);
+    println!("Sum = {}", sum);
 
 }
 
@@ -161,6 +193,42 @@ fn main() {
 *
 */
 fn partition_data(num_partitions: usize, v: &Vec<usize>) -> Vec<Vec<usize>>{
-    // Remove the following line which has been added to remove a compiler error
-    partition_data_in_two(v)
+    // Create a vector that will contain vectors of integers
+    let mut xs: Vec<Vec<usize>> = Vec::new();
+    let mut indx = 0;
+    // Create the first vector of integers
+    let mut r = v.len() % num_partitions;
+    let partition_size = v.len() / num_partitions;
+        for _j in 0..num_partitions {
+            let mut x1 : Vec<usize> = Vec::new();
+            if r > 0
+            { //if the modulo is > 0 then add one to part size for loop
+                    for i in 0..partition_size + 1 {
+                        x1.push(v[indx]);
+                        indx += 1;
+                    }
+                r -= 1;
+            }
+            else { //otherwise partition normally/
+                for i in 0..partition_size{
+                    x1.push(v[indx]);
+                    indx += 1;
+                }
+            }
+            xs.push(x1);
+    }
+    // Add the first half of the integers in the input vector to x1
+
+    // Add x1 to the vector that will be returned by this function
+
+    // // Create the second vector of integers
+    // let mut x2 : Vec<usize> = Vec::new();
+    // // Add the second half of the integers in the input vector to x2
+    // for i in partition_size..v.len(){
+    //     x2.push(v[i]);
+    // }
+    // Add x2 to the vector that will be returned by this function
+    // xs.push(x2);
+    // Return the result vector
+    xs
 }
